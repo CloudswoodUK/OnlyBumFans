@@ -27,6 +27,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: 'Unknown'
     },
+    credit: {
+        type: String,
+        required:true,
+        default: '0.00'
+    },
     lastLogin:{
         type:Date,
         required:true,
@@ -56,5 +61,5 @@ const userSchema = new mongoose.Schema({
 
 },{timestamps: true,
     collection: 'users'});
- 
+    
 export const User = mongoose.model("User", userSchema);

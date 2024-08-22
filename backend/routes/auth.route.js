@@ -10,7 +10,7 @@ import {
 	syncAuthentication } from "../controllers/auth.controllers.js";
 
 import { verifyToken } from "../middleware/verifyToken.js";
-
+/// router index
 router.get('/sync-auth', verifyToken ,syncAuthentication);
 
 router.post('/signup', signup);

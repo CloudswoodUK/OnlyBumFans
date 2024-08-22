@@ -18,7 +18,7 @@ const calculateAge = (dateOfBirth) => {
     return age;
 };
 export const signup = async (req, res) => {
-    const {email, password, name, gender, country, dateOfBirth} = req.body;
+    const {email, password, name, gender, country, dateOfBirth} = req.body;dateOfBirth
     try {
         if(!email || !password || !name || !gender || !country || !dateOfBirth) {
             throw new Error ("All fields are required.");

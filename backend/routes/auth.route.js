@@ -7,16 +7,18 @@ import {
 	verifyEmail,
 	forgotPassword,
 	resetPassword,
-	syncAuthentication } from "../controllers/auth.controllers.js";
+	additionalInformation,
+	checkAuth } from "../controllers/auth.controllers.js";
 
 import { verifyToken } from "../middleware/verifyToken.js";
 /// router index
-router.get('/sync-auth', verifyToken ,syncAuthentication);
+router.get('/check-auth', verifyToken ,checkAuth);
 
 router.post('/signup', signup);
 router.post('/login', login);
-router.post('/logout', logout);
+router.post('/logout', verifyToken , logout);
 router.post('/verify-email', verifyEmail);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password/:token', resetPassword);
+router.post('/additional-information',verifyToken, additionalInformation);
 export default router;

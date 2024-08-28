@@ -1,24 +1,66 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import signupImage from "/528999.svg";
+import { Link, useNavigate } from "react-router-dom";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { format } from "date-fns";
+import signupImage from "/589999.svg";
 import logo from "/obf-logo.svg";
 import dmca from "/DMCA.svg";
 import rta from "/restricted.svg";
 
 import InputSignup from "../components/InputSignup";
 import SelectSignup from "../components/SelectSignup";
-import { User, Mail, Lock, Calendar, Globe, UsersRound } from "lucide-react";
+import {
+  User,
+  Mail,
+  Lock,
+  Calendar,
+  Globe,
+  UsersRound,
+  Loader,
+} from "lucide-react";
+import { userAuthStore } from "../store/authStore";
+import toast from "react-hot-toast";
+import InputDateSignup from "../components/InputDateSignup";
 
 const SignupPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [dob, setDob] = useState("");
-  const [selectedGenderOption, setSelectedGenderOption] = useState("");
-  const [selectedCountryOption, setSelectedCountryOption] = useState("");
+  const [dateOfBirth, setDob] = useState("");
+  const [gender, setSelectedGenderOption] = useState("");
+  const [country, setSelectedCountryOption] = useState("");
 
-  const handleSignup = (e) => {
+  const navigate = useNavigate();
+  const { signup, error, isLoading } = userAuthStore();
+  const formatDate = (date) => {
+    if (!date) return '';
+    const day = date.getDate();
+    const monthIndex = date.getMonth();
+    const year = date.getFullYear();
+  
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+  
+    const monthName = months[monthIndex];
+    return `${day} ${monthName} ${year}`;
+  };
+  
+  const handleDateChange = (date) => {
+    setDob(formatDate(date));
+  };
+  
+  const handleSignup = async (e) => {
     e.preventDefault();
+    try {
+      await signup(email, password, name, gender, dateOfBirth, country);
+      toast.success("Successfully signed up.");
+      navigate("/verify-email");
+    } catch (error) {
+      console.log(error);
+    }
   };
   return (
     <div className="w-full h-screen bg-white">
@@ -29,23 +71,11 @@ const SignupPage = () => {
             {/* Top Column*/}
             <div className="flex items-center justify-between mt-4 w-full">
               {/* Logo Image */}
-              <img
-                src={logo}
-                alt="Logo"
-                className="w-auto h-16" 
-              />
+              <img src={logo} alt="Logo" className="w-auto h-16" />
               {/* Container for Two Images */}
               <div className="flex space-x-4">
-                <img
-                  src={dmca}
-                  alt="Image 1"
-                  className="w-auto h-8"
-                />
-                <img
-                  src={rta}
-                  alt="Image 2"
-                  className="w-auto h-8"
-                />
+                <img src={dmca} alt="Image 1" className="w-auto h-8" />
+                <img src={rta} alt="Image 2" className="w-auto h-8" />
               </div>
             </div>
 
@@ -75,7 +105,13 @@ const SignupPage = () => {
               </p>
               {/* Divider */}
               <hr className="w-full border-t-1 border-black my-4" />
+
               <form onSubmit={handleSignup} className="w-full">
+                {error && (
+                  <p className="text-red-700 font-medium text-lg my-2 text-center px-10 py-3 bg-red-200 rounded-lg border-2 border-red-700">
+                    {error}
+                  </p>
+                )}
                 <InputSignup
                   icon={User}
                   type="text"
@@ -99,32 +135,38 @@ const SignupPage = () => {
                 />
                 <SelectSignup
                   icon={UsersRound}
-                  value={selectedGenderOption}
-                  onChange={(e) => setSelectedGenderOption(e.target.value)}
+                  value={gender} // Bind the selected value to state
+                  onChange={(e) => setSelectedGenderOption(e.target.value)} // Update state on change
                   options={[
-                    { value: "", label: "Select Your Gender", disabled: false },
+                    { value: "", label: "Select Your Gender", disabled: true }, // Disable the placeholder option
                     { value: "Male", label: "Male" },
                     { value: "Female", label: "Female" },
                     { value: "Ladyboy", label: "Ladyboy" },
                   ]}
                 />
-                <InputSignup
-                  icon={Calendar}
-                  type="date"
-                  placeholder="Your Date of Birth"
-                  value={dob}
-                  onChange={(e) => setDob(e.target.value)}
-                />
+                <InputDateSignup icon={Calendar}>
+                  <DatePicker
+                    selected={dateOfBirth ? new Date(dateOfBirth) : null}
+                    onChange={handleDateChange}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="dd/mm/yyyy"
+                    showYearDropdown
+                    showMonthDropdown
+                    dropdownMode="select"
+                    className="bg-transparent placeholder-black focus:border-0 focus:ring-0 w-full"
+                    
+                  />
+                </InputDateSignup>
 
                 <SelectSignup
                   icon={Globe}
-                  value={selectedCountryOption}
+                  value={country}
                   onChange={(e) => setSelectedCountryOption(e.target.value)}
                   options={[
                     {
                       value: "",
                       label: "Select Your Country",
-                      disabled: false,
+                      disabled: true,
                     },
                     { value: "Afghanistan", label: "Afghanistan" },
                     { value: "Albania", label: "Albania" },
@@ -428,11 +470,17 @@ const SignupPage = () => {
                     { value: "Zimbabwe", label: "Zimbabwe" },
                   ]}
                 />
+
                 <button
                   type="submit"
+                  disabled={isLoading}
                   className="w-full mt-3 bg-black text-white rounded-lg px-10 py-3 font-normal text-lg hover:bg-red-700 hover:border-2"
                 >
-                  Proceed To Signup
+                  {isLoading ? (
+                    <Loader className="w-6 h-6 animate-spin text-center mx-auto" />
+                  ) : (
+                    "Proceed To Signup"
+                  )}
                 </button>
                 <div className="py-3 font-normal text-lg">
                   <p>

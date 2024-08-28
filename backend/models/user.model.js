@@ -54,6 +54,26 @@ const userSchema = new mongoose.Schema({
         type: Date,
         required: true
     },
+    profilePicture: {
+        type:String,
+        default: "profpic.svg"
+    },
+    maritalStatus: {
+        type:String,
+        default:"Not Disclosed Yet"
+    },
+    habitOfSmoking: {
+        type:String,
+        default:"Not Disclosed Yet"
+    },
+    habitOfDrinking: {
+        type:String,
+        default:"Not Disclosed Yet"
+    },
+    wantsToTravel: {
+        type:String,
+        default:"Not Disclosed Yet"
+    },
     resetPasswordToken:String,
     resetPasswordExpiresAt:Date,
     verificationToken:String,

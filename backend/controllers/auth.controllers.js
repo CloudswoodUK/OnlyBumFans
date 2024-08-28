@@ -2,8 +2,16 @@ import { response } from "express";
 import axios from 'axios';
 import moment from 'moment';
 import crypto from 'crypto';
+import { fileURLToPath } from 'url';
+import { dirname, join} from 'path';
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
+
+import mime from 'mime-types';
 import { User } from "../models/user.model.js";
 import bcryptjs from "bcryptjs";
+import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPasswordResetSuccessEmail } from "../mailtrap/emails.js";
@@ -17,8 +25,40 @@ const calculateAge = (dateOfBirth) => {
     }
     return age;
 };
+
+////////////////
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadPath = join(__dirname, '../../frontend/public/profile');
+        if (!fs.existsSync(uploadPath)) {
+            fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, `${Date.now()}${ext}`);
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    const allowedExtensions = ['jpg', 'jpeg', 'png'];
+    const fileExtension = file.originalname.split('.').pop().toLowerCase();
+    const mimeType = mime.lookup(file.originalname);
+
+    if (!allowedExtensions.includes(fileExtension) || !['image/jpeg', 'image/png'].includes(mimeType)) {
+        return cb(new Error("Invalid file type. Only .jpg, .jpeg, and .png files are allowed."));
+    }
+    cb(null, true);
+};
+
+const upload = multer({ storage, fileFilter });
+///////////////
 export const signup = async (req, res) => {
-    const {email, password, name, gender, country, dateOfBirth} = req.body;dateOfBirth
+    const {email, password, name, gender, country, dateOfBirth} = req.body;
     try {
         if(!email || !password || !name || !gender || !country || !dateOfBirth) {
             throw new Error ("All fields are required.");
@@ -70,7 +110,7 @@ export const signup = async (req, res) => {
     }
 };
 export const verifyEmail = async (req, res) => {
-    const { code} = req.body;
+    const { code } = req.body;
     try {
         const user = await User.findOne({
             verificationToken : code,
@@ -125,8 +165,27 @@ export const login = async (req, res) => {
     }
 };
 export const logout = async (req, res) => {
-    res.clearCookie("token");
-    res.status(200).json({success:true, message : "Logged out successfully."});
+    try {
+        console.log("UserID in request:", req.userID);
+
+        if (!req.userID) {
+            return res.status(400).json({ success: false, message: "User ID not found in request." });
+        }
+
+        const user = await User.findById(req.userID);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        user.isOnline = false;
+        await user.save();
+
+        res.clearCookie("token");
+        res.status(200).json({ success: true, message: "Logged out successfully." });
+    } catch (error) {
+        console.log("Error in logout:", error);
+        res.status(500).json({ success: false, message: "Logout error:", error });
+    }
 };
 export const forgotPassword = async (req, res) => {
     const {email} = req.body;
@@ -170,7 +229,7 @@ export const resetPassword = async (req, res) =>{
         res.status(500).json({success:false, message : "Reset password email error : ", error});
     }
 };
-export const syncAuthentication = async (req, res) => {
+export const checkAuth = async (req, res) => {
     try {
         const user = await User.findById(req.userID).select("-password");
         if (!user) {
@@ -181,4 +240,55 @@ export const syncAuthentication = async (req, res) => {
         console.log("Error in Sync Authentication : ", error);
         res.status(400).json({success: false, message : error.message});
     }
+};
+
+export const additionalInformation = (req, res) => {
+    upload.single('profilePicture')(req, res, async (err) => {
+        if (err) {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+
+        const { maritalStatus, habitOfSmoking, habitOfDrinking, wantsToTravel } = req.body;
+        const profilePicture = req.file; 
+
+        try {
+            if (!profilePicture || !maritalStatus || !habitOfDrinking || !habitOfSmoking || wantsToTravel === undefined) {
+                throw new Error("All fields are required.");
+            }
+
+            if (!req.userID) {
+                return res.status(400).json({ success: false, message: "User ID not found in request." });
+            }
+            const userId = await User.findById(req.userID); 
+            const profilePicPath = `/profile/${profilePicture.filename}`;
+
+            const updatedUser = await User.findByIdAndUpdate(
+                userId,
+                {
+                    maritalStatus,
+                    habitOfSmoking,
+                    habitOfDrinking,
+                    wantsToTravel,
+                    profilePicture: profilePicPath, 
+                },
+                { new: true }
+            );
+
+            if (!updatedUser) {
+                throw new Error("User not found.");
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Profile updated successfully.",
+                user: {
+                    ...updatedUser._doc,
+                    password: undefined, 
+                }
+            });
+
+        } catch (error) {
+            res.status(400).json({ success: false, message: error.message });
+        }
+    });
 };

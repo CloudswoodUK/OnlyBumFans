@@ -1,13 +1,18 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import EmailVerificationPage from "./pages/EmailVerificationPage";
 import DashboardPage from "./pages/DashboardPage";
-import { Toaster } from "react-hot-toast";
+import ProfilePage from "./pages/ProfilePage";
 import UpdateProfilePage from "./pages/UpdateProfilePage";
 import AdditionalInformationPage from "./pages/AdditionalInformationPage";
+
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import { userAuthStore } from "./store/authStore";
 import { useEffect } from "react";
+import { Toaster } from "react-hot-toast";
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, user } = userAuthStore();
@@ -33,7 +38,7 @@ function App() {
     checkAuth();
   }, [checkAuth]);
   if (isCheckingAuth) {
-    return <div className="flex items-center justify-center h-screen text-center text-red-700 text-3xl font-light">Loading...</div>; // or return null to prevent premature redirection
+    return <div className="flex items-center justify-center h-screen text-center text-red-700 text-3xl font-light">Loading...</div>; 
   }
   console.log("Is Authenticated", isAuthenticated);
   console.log("User", user);
@@ -61,6 +66,22 @@ function App() {
             </RedirectAuthenticatedUser>
           }
         />
+        <Route
+          path="/forgot-password"
+          element={
+            <RedirectAuthenticatedUser>
+              <ForgotPasswordPage />
+            </RedirectAuthenticatedUser>
+          }
+        />
+        <Route
+          path="/reset-password/:token"
+          element={
+            <RedirectAuthenticatedUser>
+              <ResetPasswordPage />
+            </RedirectAuthenticatedUser>
+          }
+        />
         <Route path="/verify-email" element={<EmailVerificationPage />} />
         <Route
           path="/additional-information"
@@ -76,6 +97,22 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/update-profile"
+          element={
+            <ProtectedRoute>
+              <UpdateProfilePage />
             </ProtectedRoute>
           }
         />

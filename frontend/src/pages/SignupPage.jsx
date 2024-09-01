@@ -27,39 +27,87 @@ const SignupPage = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [dateOfBirth, setDob] = useState("");
   const [gender, setSelectedGenderOption] = useState("");
   const [country, setSelectedCountryOption] = useState("");
 
+
+  ////////////////////////////////////////
+  const validatePassword = (password) => {
+    const minLength = /.{8,}/;
+    const hasLetter = /[a-zA-Z]/;
+    const hasNumber = /\d/;
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/;
+
+    return (
+      minLength.test(password) &&
+      hasLetter.test(password) &&
+      hasNumber.test(password) &&
+      hasSpecialChar.test(password)
+    );
+  };
+
+  const handlePasswordChange = (e) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+
+    if (!validatePassword(newPassword)) {
+      setPasswordError(
+        "Password must be at least 8 characters long, contain at least one letter, one number, and one special character."
+      );
+    } else {
+      setPasswordError("");
+    }
+  };
+  ///////////////////////////////
+
   const navigate = useNavigate();
   const { signup, error, isLoading } = userAuthStore();
   const formatDate = (date) => {
-    if (!date) return '';
+    if (!date) return "";
     const day = date.getDate();
     const monthIndex = date.getMonth();
     const year = date.getFullYear();
-  
+
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
-  
+
     const monthName = months[monthIndex];
     return `${day} ${monthName} ${year}`;
   };
-  
+
   const handleDateChange = (date) => {
     setDob(formatDate(date));
   };
-  
+
   const handleSignup = async (e) => {
     e.preventDefault();
+
+    if (!validatePassword(password)) {
+      setPasswordError("Please enter a valid password.");
+      return;
+    }
+
     try {
       await signup(email, password, name, gender, dateOfBirth, country);
       toast.success("Successfully signed up.");
       navigate("/verify-email");
     } catch (error) {
-      console.log(error);
+      setPasswordError("");
+      setError(error.message || "Something went wrong. Please try again.");
     }
   };
   return (
@@ -107,11 +155,12 @@ const SignupPage = () => {
               <hr className="w-full border-t-1 border-black my-4" />
 
               <form onSubmit={handleSignup} className="w-full">
-                {error && (
+                {(passwordError || error) && (
                   <p className="text-red-700 font-medium text-lg my-2 text-center px-10 py-3 bg-red-200 rounded-lg border-2 border-red-700">
-                    {error}
+                    {passwordError || error}
                   </p>
                 )}
+
                 <InputSignup
                   icon={User}
                   type="text"
@@ -131,8 +180,9 @@ const SignupPage = () => {
                   type="password"
                   placeholder="Password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={handlePasswordChange}
                 />
+
                 <SelectSignup
                   icon={UsersRound}
                   value={gender} // Bind the selected value to state
@@ -141,7 +191,9 @@ const SignupPage = () => {
                     { value: "", label: "Select Your Gender", disabled: true }, // Disable the placeholder option
                     { value: "Male", label: "Male" },
                     { value: "Female", label: "Female" },
-                    { value: "Ladyboy", label: "Ladyboy" },
+                    { value: "Trans", label: "Trans" },
+                    { value: "Lesbian", label: "Lesbian" },
+                    { value: "Gay", label: "Gay" },
                   ]}
                 />
                 <InputDateSignup icon={Calendar}>
@@ -154,7 +206,6 @@ const SignupPage = () => {
                     showMonthDropdown
                     dropdownMode="select"
                     className="bg-transparent placeholder-black focus:border-0 focus:ring-0 w-full"
-                    
                   />
                 </InputDateSignup>
 

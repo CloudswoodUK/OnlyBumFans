@@ -16,18 +16,32 @@ import {
 } from "lucide-react";
 import { userAuthStore } from "../store/authStore";
 import toast from "react-hot-toast";
-const handleAdditionalInformation = async (e) => {
-  e.preventDefault();
-};
 
 const AdditionalInformationPage = () => {
-  const [profile, setProfile] = useState("");
-  const [married, setMarried] = useState("");
-  const [smoke, setSmoke] = useState("");
-  const [drink, setDrink] = useState("");
-  const [travel, setTravel] = useState("");
+  const [profilePicture, setProfile] = useState("");
+  const [maritalStatus, setMarried] = useState("");
+  const [habitOfSmoking, setSmoke] = useState("");
+  const [habitOfDrinking, setDrink] = useState("");
+  const [wantsToTravel, setTravel] = useState("");
   const navigate = useNavigate();
-  const { login, isLoading, error } = userAuthStore();
+  const { additionalInformation, isLoading, error } = userAuthStore();
+
+  const handleAdditionalInformation = async (e) => {
+    e.preventDefault();
+    try {
+      await additionalInformation(
+        profilePicture,
+        maritalStatus,
+        habitOfSmoking,
+        habitOfDrinking,
+        wantsToTravel
+      );
+      toast.success("Successfully updated data.");
+      navigate("/dashboard");
+    } catch (error) {
+      console.log(error);
+    }
+  };
   return (
     <div className="w-full h-screen bg-white">
       <div className="flex flex-col md:flex-row h-full">
@@ -75,15 +89,20 @@ const AdditionalInformationPage = () => {
 
               {/* Form Fields */}
               <form onSubmit={handleAdditionalInformation} className="w-full">
+                {error && (
+                  <p className="text-red-700 font-medium text-lg my-2 text-center px-10 py-3 bg-red-200 rounded-lg border-2 border-red-700">
+                    {error}
+                  </p>
+                )}
                 <p className="py-2 font-normal text-lg">Profile Picture</p>
                 <InputLogin
                   icon={Images}
                   type="file"
                   placeholder="Profile Picture"
-                  value={profile}
-                  onChange={(e) => setProfile(e.target.value)}
+                  onChange={(e) => setProfile(e.target.files[0])}
                   accept=".jpg, .jpeg, .png"
                 />
+
                 <p className="pt-1 pb-2 font-normal text-lg text-red-700">
                   [We request you to upload the picture of your bum.]
                 </p>
@@ -91,28 +110,28 @@ const AdditionalInformationPage = () => {
                   icon={UsersRound}
                   type="text"
                   placeholder="Your marital status ?"
-                  value={married}
+                  value={maritalStatus}
                   onChange={(e) => setMarried(e.target.value)}
                 />
                 <InputLogin
                   icon={Cigarette}
                   type="text"
                   placeholder="Do you smoke ?"
-                  value={smoke}
+                  value={habitOfSmoking}
                   onChange={(e) => setSmoke(e.target.value)}
                 />
                 <InputLogin
                   icon={Milk}
                   type="text"
                   placeholder="Do you drink alcohol ?"
-                  value={drink}
+                  value={habitOfDrinking}
                   onChange={(e) => setDrink(e.target.value)}
                 />
                 <InputLogin
                   icon={Plane}
                   type="text"
                   placeholder="Do you like to travel ?"
-                  value={travel}
+                  value={wantsToTravel}
                   onChange={(e) => setTravel(e.target.value)}
                 />
                 <button

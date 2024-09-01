@@ -56,7 +56,7 @@ const userSchema = new mongoose.Schema({
     },
     profilePicture: {
         type:String,
-        default: "profpic.svg"
+        default: "/profile/profpic.svg"
     },
     maritalStatus: {
         type:String,

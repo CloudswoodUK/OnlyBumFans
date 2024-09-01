@@ -13,7 +13,8 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true 
-  }));app.use(express.json());
+  }));
+app.use(express.json());
 app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 

@@ -32,7 +32,6 @@ const SignupPage = () => {
   const [gender, setSelectedGenderOption] = useState("");
   const [country, setSelectedCountryOption] = useState("");
 
-
   ////////////////////////////////////////
   const validatePassword = (password) => {
     const minLength = /.{8,}/;
@@ -521,7 +520,10 @@ const SignupPage = () => {
                     { value: "Zimbabwe", label: "Zimbabwe" },
                   ]}
                 />
-
+                <p className="text-lg font-light">
+                  I hereby declare that I am above 18 years old and agree to the&nbsp;
+                  <Link to="/terms-and-conditions" className="text-red-700">terms and conditions</Link> of this site.
+                </p>
                 <button
                   type="submit"
                   disabled={isLoading}
